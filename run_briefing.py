@@ -13,7 +13,7 @@ load_dotenv()
 async def main():
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
-        print("[Error]: DATABASE_URL environment variable is missing.")
+        print("[Error]: DATABASE_URL is missing.")
         return
 
     print("Connecting to Neon database...")
@@ -21,7 +21,6 @@ async def main():
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as db:
-        # 1. Fetch holdings with fund metadata
         query = select(Holding, MutualFund).join(
             MutualFund, Holding.scheme_code == MutualFund.scheme_code
         )
@@ -36,25 +35,42 @@ async def main():
             {
                 "scheme_code": holding.scheme_code,
                 "scheme_name": fund.scheme_name,
-                "total_units": holding.total_units,
-                "average_nav": holding.average_nav,
-                "invested_amount": holding.invested_amount
+                "total_units": float(holding.total_units),
+                "invested_amount": float(holding.invested_amount),
+                "average_nav": float(holding.average_nav) if holding.average_nav else 0.0
             }
             for holding, fund in rows
         ]
 
-    print(f"Loaded {len(raw_holdings)} holdings. Computing metrics...")
+    print(f"Loaded {len(raw_holdings)} holdings. Computing live metrics...")
     
-    # 2. Compute valuation & live NAVs from AMFI
+    # Calculates Valuation, Daily P&L, and Total P&L via live AMFI NAVs
     metrics = await compute_portfolio_metrics(raw_holdings)
-
-    print("Generating AI market insights via Groq...")
-    # 3. Generate AI summary
     ai_insights = await generate_portfolio_briefing(metrics)
 
-    # 4. Format Telegram notification
     daily_sign = "+" if metrics.get('daily_pnl', 0) >= 0 else ""
     total_sign = "+" if metrics.get('total_pnl', 0) >= 0 else ""
+
+    # ---- FUND-WISE BREAKDOWN ----
+    funds_text = "<b>🏦 Fund-wise Breakdown:</b>\n"
+    for fund in metrics.get("funds", []):
+        name = fund.get("scheme_name", "Unknown")
+        short_name = (name[:27] + '...') if len(name) > 30 else name 
+        
+        current = fund.get("current_value", 0)
+        daily = fund.get("daily_pnl", 0)
+        total = fund.get("total_pnl", 0)
+        
+        daily_icon = "🟩" if daily >= 0 else "🟥"
+        total_icon = "🟢" if total >= 0 else "🔴"
+        daily_sign_fund = "+" if daily >= 0 else ""
+        total_sign_fund = "+" if total >= 0 else ""
+
+        funds_text += (
+            f"🔹 <b>{short_name}</b>\n"
+            f"   Val: ₹{current:,.2f} | 1D: {daily_icon} {daily_sign_fund}₹{abs(daily):,.2f} | Tot: {total_icon} {total_sign_fund}₹{abs(total):,.2f}\n"
+        )
+    # -----------------------------
 
     alert_text = (
         f"📊 <b>PortfolioPulse Daily Briefing</b>\n"
@@ -63,16 +79,11 @@ async def main():
         f"• <b>Current Value:</b> ₹{metrics['current_value']:,.2f}\n"
         f"• <b>Today's P&L:</b> {daily_sign}₹{metrics.get('daily_pnl', 0):,.2f} ({daily_sign}{metrics.get('daily_percentage', 0):.2f}%)\n"
         f"• <b>Total P&L:</b> {total_sign}₹{metrics['total_pnl']:,.2f} ({total_sign}{metrics['percentage_return']:.2f}%)\n\n"
+        f"{funds_text}\n"
         f"💡 <b>AI Market Insights:</b>\n{ai_insights}"
     )
 
-    print("Sending Telegram notification...")
-    success = await send_telegram_alert(alert_text)
-    if success:
-        print("Telegram briefing dispatched successfully!")
-    else:
-        print("[Error]: Failed to deliver Telegram alert.")
-
+    await send_telegram_alert(alert_text)
     await engine.dispose()
 
 if __name__ == "__main__":

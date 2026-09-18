@@ -2,8 +2,9 @@ name: Daily Portfolio Briefing
 
 on:
   schedule:
-    # 01:30 UTC = 7:00 AM IST, 18:30 UTC = 12:00 AM IST
-    - cron: '30 1,18 * * 1-5'
+    # 01:30 UTC = 7:00 AM IST, 19:00   UTC = 12:30 AM IST
+    - cron: '30 1 * * *'
+    - cron: '0 19  * * *'   
   workflow_dispatch:
 
 jobs:

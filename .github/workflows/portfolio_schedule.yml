@@ -3,8 +3,8 @@ name: Daily Portfolio Briefing
 on:
   workflow_dispatch:
   schedule:
-    # 03:55 UTC = 9:25 AM IST
-    - cron: '55 3 * * *'
+    # 03:20 UTC = 8:50 AM IST (Test Run)
+    - cron: '20 3 * * *'
 
 jobs:
   run-briefing:

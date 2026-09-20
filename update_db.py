@@ -5,6 +5,11 @@ from sqlalchemy import create_engine, text
 
 # Get environment variables
 db_url = os.getenv("DATABASE_URL")
+# Clean the URL to force synchronous connection
+if db_url:
+    db_url = db_url.replace("+asyncpg", "")
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://")
 telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 command_text = os.getenv("COMMAND_TEXT", "")

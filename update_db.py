@@ -5,12 +5,12 @@ from sqlalchemy import create_engine, text
 
 # Get environment variables
 db_url = os.getenv("DATABASE_URL")
-telegram_token = os.getenv("TELEGRAM_TOKEN")
+telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 command_text = os.getenv("COMMAND_TEXT", "")
 
 def send_telegram(message: str):
-    url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
+    url = f"https://api.telegram.org/bot{telegram_bot_token}/sendMessage"
     httpx.post(url, json={"chat_id": chat_id, "text": message, "parse_mode": "HTML"})
 
 def process_update():

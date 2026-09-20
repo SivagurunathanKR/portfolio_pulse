@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, text
 # Get environment variables
 db_url = os.getenv("DATABASE_URL")
 telegram_token = os.getenv("TELEGRAM_TOKEN")
-chat_id = os.getenv("MY_CHAT_ID")
+chat_id = os.getenv("TELEGRAM_CHAT_ID")
 command_text = os.getenv("COMMAND_TEXT", "")
 
 def send_telegram(message: str):

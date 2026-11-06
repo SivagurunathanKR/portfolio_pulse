@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
   schedule:
     # 18:30 UTC = 12:00 AM IST
-    - cron: '30 18 * * *'
+    #- cron: '30 18 * * *'
     # 01:30 UTC = 7:00 AM IST
-    - cron: '30 1 * * *'
+    #- cron: '30 1 * * *'
 
 jobs:
   run-briefing:

@@ -2,7 +2,7 @@ name: Daily Portfolio Briefing
 
 on:
   workflow_dispatch:
-  schedule:
+  #schedule:
     # 18:30 UTC = 12:00 AM IST
     #- cron: '30 18 * * *'
     # 01:30 UTC = 7:00 AM IST
